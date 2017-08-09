@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1" user-scalable="no">
+    <style>
+        body {
+            background-color: #fff;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 16px;
+            color: #000;
+        }
+
+        a:link,
+        a:visited {
+            color: #4682b4;
+        }
+
+        a:hover {
+            color: #4169e1;
+        }
+
+        #main {
+            width: 800px;
+            height: 600px;
+            margin: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="main">
+    </div>
+
+    <a href="https://github.com/iWun/earthquake"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/38ef81f8aca64bb9a64448d0d70f1308ef5341ab/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"></a>
+
+    <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdn.bootcss.com/echarts/3.6.2/echarts.js"></script>
+    <!--<script src="js/jquery.js"></script>
+    <script src="js/echarts.js"></script>-->
+    <script src="js/world.js"></script>
+    <script type="text/javascript">
+        var myChart = echarts.init(document.getElementById('main'));
+
+        // Specify configurations and data graphs 
+        myChart.showLoading();
+        myChart.setOption({
+            series: [{
+                type: 'map',
+                map: 'world'
+            }]
+        });
+
+        $.get('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson', function (data) {
+            myChart.hideLoading();
+
+            option = {
+                backgroundColor: '#404a59',
+                title: {
+                    text: '全球地震实时可视化（最近一个月）',
+                    subtext: 'data from USGS',
+                    sublink: 'https://earthquake.usgs.gov/data/',
+                    x: 'center',
+                    textStyle: {
+                        fontSize: 26,
+                        color: '#fff'
+                    }
+                },
+                tooltip: {
+                    trigger: 'item',
+                    showDelay: 0,
+                    transitionDuration: 0.2,
+                    formatter: function (params) {
+
+                        return '名称：' + params.data.name + '<br/>' +
+                            '时间：' + new Date(params.data.time).toLocaleString() + '<br/>' +
+                            '强度：' + params.data.mag + '级<br/>' +
+                            '地点： ' + '(' + params.data.value[0] + ', ' + params.data.value[1] + ')';
+                    }
+                },
+                toolbox: {
+                    show: true,
+                    left: 'left',
+                    top: 'top',
+                    feature: {
+                        mark: { show: true },
+                        dataView: { show: true, readOnly: false },
+                        restore: { show: true },
+                        saveAsImage: { show: true }
+                    }
+                },
+                legend: {
+                    orient: 'vertical',
+                    y: 'bottom',
+                    x: 'right',
+                    data: ['地震强度'],
+                    textStyle: {
+                        color: '#d94e5d'
+                    }
+                },
+                visualMap: {
+                    min: 0,
+                    max: 10,
+                    splitNumber: 5,
+                    //calculable: true,
+                    // inRange: {
+                    //     color: ['#50a3ba', '#eac736', '#d94e5d']
+                    // },
+                    color: ['#d94e5d', '#eac736', '#50a3ba'],
+                    textStyle: {
+                        color: '#fff'
+                    }
+                },
+                geo: {
+                    map: 'world',
+                    label: {
+                        emphasis: {
+                            show: false
+                        }
+                    },
+                    itemStyle: {
+                        normal: {
+                            areaColor: '#eee',
+                            borderColor: '#111'
+                        },
+                        // emphasis: {
+                        //     areaColor: '#2a333d'
+                        // }
+                    }
+                },
+                series: [
+                    {
+                        name: '地震强度',
+                        type: 'scatter',
+                        coordinateSystem: 'geo',
+                        data: [],
+                        symbolSize: function (val, params) {
+                            return params.data.mag * 2;
+                        },
+                        showEffectOn: 'render',
+                        rippleEffect: {
+                            brushType: 'stroke'
+                        },
+                        hoverAnimation: true,
+                        label: {
+                            normal: {
+                                show: false
+                            },
+                            emphasis: {
+                                show: false
+                            }
+                        },
+                        itemStyle: {
+                            normal: {
+                                color: 'red',
+                                shadowBlur: 10,
+                                shadowColor: '#333'
+                            }
+                        },
+                    },
+                    {
+                        name: 'Top 5',
+                        type: 'effectScatter',
+                        coordinateSystem: 'geo',
+                        data: [],
+                        symbolSize: function (val, params) {
+                            return params.data.mag * 2;
+                        },
+                        showEffectOn: 'render',
+                        rippleEffect: {
+                            brushType: 'stroke'
+                        },
+                        hoverAnimation: true,
+                        label: {
+                            normal: {
+                                show: false
+                            },
+                            emphasis: {
+                                show: false
+                            }
+                        },
+                        itemStyle: {
+                            normal: {
+                                color: 'red',
+                                shadowBlur: 10,
+                                shadowColor: '#333'
+                            }
+                        },
+                        zlevel: 1
+                    }
+                ]
+            };
+
+            if (typeof data === 'string') {
+                data = JSON.parse(data);
+            }
+
+            for (var n = 0; n < data.features.length; n++) {
+                option.series[0].data.push({
+                    name: data.features[n].properties.title,
+                    value: data.features[n].geometry.coordinates.slice(0, 2)
+                        .concat(data.features[n].properties.mag),
+                    mag: data.features[n].properties.mag,
+                    time: data.features[n].properties.time,
+                    //place: data.features[n].properties.place
+
+                });
+            }
+            option.series[1].data = option.series[0].data.sort(function (a, b) {
+                return b.mag - a.mag;
+            }).slice(0, 6);
+            myChart.setOption(option);
+
+        });
+
+        //仿照D3.js，用感叹号将函数声明变成函数表达式，以便于函数的自执行调用
+        !function () {
+            var handler = function () {
+                $.get('https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson', function (data) {
+
+                    option = {
+                        series: [
+                            {
+                                data: [],
+                            },
+                            {
+                                data: [],
+                            }
+                        ]
+                    };
+
+                    if (typeof data === 'string') {
+                        data = JSON.parse(data);
+                    }
+
+                    for (var n = 0; n < data.features.length; n++) {
+                        option.series[0].data.push({
+                            name: data.features[n].properties.title,
+                            value: data.features[n].geometry.coordinates.slice(0, 2)
+                                .concat(data.features[n].properties.mag),
+                            mag: data.features[n].properties.mag,
+                            time: data.features[n].properties.time,
+                            //place: data.features[n].properties.place
+
+                        });
+                    }
+                    option.series[1].data = option.series[0].data.sort(function (a, b) {
+                        return b.mag - a.mag;
+                    }).slice(0, 6);
+                    myChart.setOption(option);
+
+                });
+            }
+            setInterval(handler, 300000);//五分钟更新一次数据
+        }();
+    </script>
+</body>
+
+</html>
